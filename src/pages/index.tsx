@@ -15,7 +15,7 @@ export default function Home({}) {
       <main className={styles.main}>
         <h1 className={styles.title}>
           Welcome to <a href="https://nextjs.org">Next.js!</a> v
-          {nextPackage.version}
+          {nextPackage.version}. Using Bun
         </h1>
 
         <p className={styles.description}>
