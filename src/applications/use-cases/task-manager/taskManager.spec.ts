@@ -52,7 +52,9 @@ class TaskManager
 
   createTask: CreateTask["createTask"] = async task => {
     const obrigatory = ["title", "description", "dueDate"];
-    const missing = obrigatory.filter(key => !Object.keys(task).includes(key));
+    const missing = obrigatory.filter(
+      key => !Object.keys(task).includes(key) || !task[key],
+    );
     if (missing.length > 0) {
       return {
         status: 400,
@@ -141,13 +143,11 @@ describe("Tasks Manager: Create Task", () => {
     const sut = makeSUT();
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    try {
-      // @ts-expect-error: its a jest test...
-      const task = await sut.createTask({});
-      expect(task).toBe(false);
-    } catch (err) {
-      expect(err.message).toBe("Missing fields: title, description, dueDate");
-    }
+    // @ts-expect-error: its a jest test...
+    const task = await sut.createTask({});
+    expect(task.status).toBe(400);
+    expect(task.success).toBe(false);
+    expect(task.error).toBe("Missing fields: title, description, dueDate");
   });
 
   it("Should be able to create a Task, even without status", async () => {
@@ -155,11 +155,13 @@ describe("Tasks Manager: Create Task", () => {
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     // @ts-expect-error: its a jest test...
-    const task = await sut.createTask({
+    const taskResponse = await sut.createTask({
       title: "Task 1",
       description: "Task 1 description",
       dueDate: nextWeek.toISOString(),
     });
+    expect(taskResponse.status).toBe(200);
+    const task = taskResponse.data;
     expect(task.title).toBe("Task 1");
     expect(task.description).toBe("Task 1 description");
     expect(task.dueDate).toBe(nextWeek.toISOString());
@@ -170,12 +172,14 @@ describe("Tasks Manager: Create Task", () => {
     const sut = makeSUT();
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const task = await sut.createTask({
+    const taskResponse = await sut.createTask({
       title: "Task 1",
       description: "Task 1 description",
       dueDate: nextWeek.toISOString(),
       status: "Doing",
     });
+    expect(taskResponse.status).toBe(200);
+    const task = taskResponse.data;
     expect(task.title).toBe("Task 1");
     expect(task.description).toBe("Task 1 description");
     expect(task.dueDate).toBe(nextWeek.toISOString());
