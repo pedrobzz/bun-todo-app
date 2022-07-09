@@ -78,7 +78,9 @@ class TaskManager
     return {
       status: task ? 200 : 404,
       success: task ? true : false,
-      ...(task ? { data: task } : { error: "Task not found" }),
+      ...(task
+        ? { data: task }
+        : { error: `Task with id ${taskId} not found` }),
     };
   };
 
@@ -196,7 +198,7 @@ describe("Tasks Manager: Get Tasks", () => {
     const taskResponse = await sut.getTaskById("123");
     expect(taskResponse.status).toBe(404);
     expect(taskResponse.success).toBe(false);
-    expect(taskResponse.error).toBe("Task not found");
+    expect(taskResponse.error).toBe("Task with id 123 not found");
     expect(taskResponse.data).toBe(undefined);
   });
 
@@ -312,14 +314,18 @@ describe("Tasks Manager: Delete Task", () => {
     const sut = makeSUT();
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const task = await sut.createTask({
+    const taskResponse = await sut.createTask({
       title: "Task 1",
       description: "Task 1 description",
       dueDate: nextWeek.toISOString(),
       status: "TODO",
     });
-    await sut.deleteTask(task.id);
-    const taskById = await sut.getTaskById(task.id);
-    expect(taskById).toBe(undefined);
+    await sut.deleteTask(taskResponse.data.id);
+    const taskByIdResponse = await sut.getTaskById(taskResponse.data.id);
+    expect(taskByIdResponse.status).toBe(404);
+    expect(taskByIdResponse.success).toBe(false);
+    expect(taskByIdResponse.error).toBe(
+      `Task with id ${taskResponse.data.id} not found`,
+    );
   });
 });
