@@ -1,5 +1,5 @@
 import { Task } from "src/domain/entities";
 
-export interface getTaskById {
-  getTaskById: (id: string) => Promise<Task>;
+export interface GetTaskById {
+  getTaskById: (id: string) => Promise<Task | undefined>;
 }

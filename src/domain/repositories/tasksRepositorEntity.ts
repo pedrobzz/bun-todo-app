@@ -2,7 +2,7 @@ import { Task } from "../entities";
 
 export interface TasksRepositorEntity {
   getAllTasks: () => Promise<Task[]>;
-  getTaskById: (id: string) => Promise<Task>;
+  getTaskById: (id: string) => Promise<Task | undefined>;
   createTask: (
     task: Omit<Task, "id" | "createdAt" | "updatedAt">,
   ) => Promise<Task>;
