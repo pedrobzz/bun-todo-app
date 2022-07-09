@@ -5,6 +5,7 @@ import {
   CreateTask,
   GetAllTasks,
   GetTaskById,
+  UpdateTask,
 } from "src/domain/use-cases/tasks";
 
 class MockTasksRepository implements TasksRepositorEntity {
@@ -43,7 +44,7 @@ class MockTasksRepository implements TasksRepositorEntity {
   };
 }
 
-class TaskManager implements CreateTask, GetTaskById, GetAllTasks {
+class TaskManager implements CreateTask, GetTaskById, GetAllTasks, UpdateTask {
   constructor(private tasksRepository: TasksRepositorEntity) {}
 
   createTask(
@@ -66,6 +67,24 @@ class TaskManager implements CreateTask, GetTaskById, GetAllTasks {
 
   getAllTasks = async (): Promise<Task[]> => {
     return this.tasksRepository.getAllTasks();
+  };
+
+  updateTask = async (
+    id: string,
+    task: Partial<Omit<Task, "id" | "createdAt" | "updatedAt">>,
+  ): Promise<Task> => {
+    const forbiddenUpdate = ["id", "createdAt", "updatedAt"];
+    const forbidden = forbiddenUpdate.filter(key =>
+      Object.keys(task).includes(key),
+    );
+    if (forbidden.length > 0) {
+      throw new Error(`Forbidden fields: ${forbidden.join(", ")}`);
+    }
+    const currentTask = await this.getTaskById(id);
+    if (!currentTask) {
+      throw new Error(`Task with id ${id} not found`);
+    }
+    return this.tasksRepository.updateTask(id, task);
   };
 }
 
@@ -168,5 +187,61 @@ describe("Tasks Manager: Get Tasks", () => {
     expect(tasks.length).toBe(2);
     expect(tasks.find(t => t.id === task1.id)).toBe(task1);
     expect(tasks.find(t => t.id === task2.id)).toBe(task2);
+  });
+});
+
+describe("Tasks Manager: Update Task", () => {
+  it("Shouldn't be able to update a Task if it doesn't exist", async () => {
+    const sut = makeSUT();
+    try {
+      const task = await sut.updateTask("123", {
+        title: "Task 1",
+      });
+      expect(task).toBe(false);
+    } catch (err) {
+      expect(err.message).toBe("Task with id 123 not found");
+    }
+  });
+
+  it("Shouldn't be able to update forbidden fields (id, createdAt, updatedAt)", async () => {
+    const sut = makeSUT();
+    const now = new Date();
+    try {
+      const updatedTask = await sut.updateTask("123", {
+        // @ts-expect-error: its a jest test...
+        id: "123",
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      });
+      expect(updatedTask).toBe(false);
+    } catch (err) {
+      expect(err.message).toBe("Forbidden fields: id, createdAt, updatedAt");
+    }
+  });
+
+  it("Should be able to update a Task", async () => {
+    const sut = makeSUT();
+    const now = new Date();
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const task = await sut.createTask({
+      title: "Task 1",
+      description: "Task 1 description",
+      dueDate: nextWeek.toISOString(),
+      status: "TODO",
+    });
+    const updatedTask = await sut.updateTask(task.id, {
+      title: "Task 1 updated",
+      description: "Task 1 description updated",
+      dueDate: nextMonth.toISOString(),
+      status: "Doing",
+    });
+    expect(updatedTask.title).toBe("Task 1 updated");
+    expect(updatedTask.description).toBe("Task 1 description updated");
+    expect(updatedTask.dueDate).toBe(nextMonth.toISOString());
+    expect(updatedTask.status).toBe("Doing");
+
+    const taskById = await sut.getTaskById(task.id);
+    expect(taskById).toBe(updatedTask);
   });
 });

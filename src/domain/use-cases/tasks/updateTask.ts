@@ -1,6 +1,6 @@
 import { Task } from "src/domain/entities";
 
-export interface updateTask {
+export interface UpdateTask {
   updateTask: (
     id: string,
     task: Partial<Omit<Task, "id" | "createdAt" | "updatedAt">>,
