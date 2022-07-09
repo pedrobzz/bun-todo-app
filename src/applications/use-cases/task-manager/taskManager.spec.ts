@@ -86,6 +86,10 @@ class TaskManager implements CreateTask, GetTaskById, GetAllTasks, UpdateTask {
     }
     return this.tasksRepository.updateTask(id, task);
   };
+
+  deleteTask = async (taskId: string): Promise<void> => {
+    return this.tasksRepository.deleteTask(taskId);
+  };
 }
 
 const makeSUT = (): TaskManager => {
@@ -243,5 +247,22 @@ describe("Tasks Manager: Update Task", () => {
 
     const taskById = await sut.getTaskById(task.id);
     expect(taskById).toBe(updatedTask);
+  });
+});
+
+describe("Tasks Manager: Delete Task", () => {
+  it("Should be able to delete a Task", async () => {
+    const sut = makeSUT();
+    const now = new Date();
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const task = await sut.createTask({
+      title: "Task 1",
+      description: "Task 1 description",
+      dueDate: nextWeek.toISOString(),
+      status: "TODO",
+    });
+    await sut.deleteTask(task.id);
+    const taskById = await sut.getTaskById(task.id);
+    expect(taskById).toBe(undefined);
   });
 });
