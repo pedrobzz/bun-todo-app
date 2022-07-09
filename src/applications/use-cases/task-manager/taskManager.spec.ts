@@ -104,7 +104,7 @@ class TaskManager
       };
     }
     const currentTask = await this.getTaskById(id);
-    if (!currentTask) {
+    if (!currentTask.success) {
       return {
         status: 404,
         success: false,
@@ -253,30 +253,28 @@ describe("Tasks Manager: Get Tasks", () => {
 describe("Tasks Manager: Update Task", () => {
   it("Shouldn't be able to update a Task if it doesn't exist", async () => {
     const sut = makeSUT();
-    try {
-      const task = await sut.updateTask("123", {
-        title: "Task 1",
-      });
-      expect(task).toBe(false);
-    } catch (err) {
-      expect(err.message).toBe("Task with id 123 not found");
-    }
+    const taskResponse = await sut.updateTask("123", {
+      title: "Task 1",
+    });
+    expect(taskResponse.status).toBe(404);
+    expect(taskResponse.success).toBe(false);
+    expect(taskResponse.error).toBe(`Task with id 123 not found`);
   });
 
   it("Shouldn't be able to update forbidden fields (id, createdAt, updatedAt)", async () => {
     const sut = makeSUT();
     const now = new Date();
-    try {
-      const updatedTask = await sut.updateTask("123", {
-        // @ts-expect-error: its a jest test...
-        id: "123",
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      });
-      expect(updatedTask).toBe(false);
-    } catch (err) {
-      expect(err.message).toBe("Forbidden fields: id, createdAt, updatedAt");
-    }
+    const updatedTaskResponse = await sut.updateTask("123", {
+      // @ts-expect-error: its a jest test...
+      id: "123",
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    });
+    expect(updatedTaskResponse.status).toBe(400);
+    expect(updatedTaskResponse.success).toBe(false);
+    expect(updatedTaskResponse.error).toBe(
+      "Forbidden fields: id, createdAt, updatedAt",
+    );
   });
 
   it("Should be able to update a Task", async () => {
@@ -290,19 +288,22 @@ describe("Tasks Manager: Update Task", () => {
       dueDate: nextWeek.toISOString(),
       status: "TODO",
     });
-    const updatedTask = await sut.updateTask(task.id, {
+    const updatedTaskResponse = await sut.updateTask(task.data.id, {
       title: "Task 1 updated",
       description: "Task 1 description updated",
       dueDate: nextMonth.toISOString(),
       status: "Doing",
     });
+    expect(updatedTaskResponse.status).toBe(200);
+    expect(updatedTaskResponse.success).toBe(true);
+    const updatedTask = updatedTaskResponse.data;
     expect(updatedTask.title).toBe("Task 1 updated");
     expect(updatedTask.description).toBe("Task 1 description updated");
     expect(updatedTask.dueDate).toBe(nextMonth.toISOString());
     expect(updatedTask.status).toBe("Doing");
 
-    const taskById = await sut.getTaskById(task.id);
-    expect(taskById).toBe(updatedTask);
+    const taskById = await sut.getTaskById(task.data.id);
+    expect(taskById.data).toBe(updatedTask);
   });
 });
 
