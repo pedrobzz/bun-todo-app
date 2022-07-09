@@ -62,7 +62,10 @@ class TaskManager
         error: `Missing fields: ${missing.join(", ")}`,
       };
     }
-    const newTask = await this.tasksRepository.createTask(task);
+    const newTask = await this.tasksRepository.createTask({
+      ...task,
+      status: task.status || "TODO",
+    });
     return {
       status: 200,
       success: true,
@@ -190,28 +193,36 @@ describe("Tasks Manager: Create Task", () => {
 describe("Tasks Manager: Get Tasks", () => {
   it("Shouldn't be able to get a Task by Id if it doesn't exist", async () => {
     const sut = makeSUT();
-    const task = await sut.getTaskById("123");
-    expect(task).toBe(undefined);
+    const taskResponse = await sut.getTaskById("123");
+    expect(taskResponse.status).toBe(404);
+    expect(taskResponse.success).toBe(false);
+    expect(taskResponse.error).toBe("Task not found");
+    expect(taskResponse.data).toBe(undefined);
   });
 
   it("Should be able to get a Task by ID", async () => {
     const sut = makeSUT();
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const task = await sut.createTask({
+    const taskResponse = await sut.createTask({
       title: "Task 1",
       description: "Task 1 description",
       dueDate: nextWeek.toISOString(),
       status: "Doing",
     });
-    const taskById = await sut.getTaskById(task.id);
-    expect(taskById).toBe(task);
+    const task = taskResponse.data;
+    const taskByIdResponse = await sut.getTaskById(task.id);
+    expect(taskByIdResponse.status).toBe(200);
+    expect(taskByIdResponse.success).toBe(true);
+    expect(taskByIdResponse.data).toBe(task);
   });
 
   it("Should be able to retrieve 0 tasks if it doesn't has one", async () => {
     const sut = makeSUT();
-    const tasks = await sut.getAllTasks();
-    expect(tasks.length).toBe(0);
+    const tasksResponse = await sut.getAllTasks();
+    expect(tasksResponse.status).toBe(200);
+    expect(tasksResponse.success).toBe(true);
+    expect(tasksResponse.data.length).toBe(0);
   });
 
   it("Should be able to retrieve all tasks", async () => {
@@ -230,10 +241,12 @@ describe("Tasks Manager: Get Tasks", () => {
       dueDate: nextWeek.toISOString(),
       status: "Doing",
     });
-    const tasks = await sut.getAllTasks();
-    expect(tasks.length).toBe(2);
-    expect(tasks.find(t => t.id === task1.id)).toBe(task1);
-    expect(tasks.find(t => t.id === task2.id)).toBe(task2);
+    const tasksResponse = await sut.getAllTasks();
+    expect(tasksResponse.status).toBe(200);
+    expect(tasksResponse.success).toBe(true);
+    expect(tasksResponse.data.length).toBe(2);
+    expect(tasksResponse.data[0]).toBe(task1.data);
+    expect(tasksResponse.data[1]).toBe(task2.data);
   });
 });
 
