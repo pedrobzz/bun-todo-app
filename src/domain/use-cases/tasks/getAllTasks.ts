@@ -1,5 +1,6 @@
 import { Task } from "src/domain/entities";
+import { BaseUseCaseResponse } from "../baseUseCaseResponse";
 
 export interface GetAllTasks {
-  getAllTasks: () => Promise<Task[]>;
+  getAllTasks: () => Promise<BaseUseCaseResponse<Task[]>>;
 }
