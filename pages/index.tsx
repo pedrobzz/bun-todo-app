@@ -3,9 +3,10 @@ import React from "react";
 import { Task } from "domain/entities";
 import { useTasks } from "application/hooks/useTasks";
 import { TaskColumns } from "application/components/TaskColumn/TaskColumn";
+import { CreateTaskComponent } from "application/components/CreateTast/CreateTask";
 
 export default function Home({}) {
-  const { createTask, tasks } = useTasks();
+  const { tasks } = useTasks();
   const allStatus: Array<Task["status"]> = [
     "TODO",
     "Doing",
@@ -22,27 +23,9 @@ export default function Home({}) {
       <div>
         <nav className="flex justify-center p-5">
           <h1 className="text-4xl font-bold">Bun Todo App</h1>
-          <button
-            onClick={async () => {
-              await createTask({
-                title: "Task Teste",
-                description: "Lorem ipsum dolor sit amet",
-                dueDate: "2020-01-01T00:00:00.000Z",
-                status: "TODO",
-              });
-            }}
-          >
-            Add Sample Task
-          </button>
-          <button
-            onClick={() => {
-              console.log(tasks);
-            }}
-          >
-            Log tasks
-          </button>
         </nav>
         <main>
+          <CreateTaskComponent />
           <div className="flex justify-between gap-12">
             {allStatus.map(status => (
               <TaskColumns
