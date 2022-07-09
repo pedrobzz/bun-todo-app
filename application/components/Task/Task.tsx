@@ -4,6 +4,11 @@ import { useState } from "react";
 
 export const TaskComponent: React.FC<{ task: Task }> = ({ task }) => {
   const { deleteTask, updateTask } = useTasks();
+  const [title, setTitle] = useState(task.title);
+  let titleTimeout: number;
+  const [description, setDescription] = useState(task.description);
+  let descriptionTimeout: number;
+
   const colors = {
     TODO: "bg-purple-400",
     Doing: "bg-yellow-400",
@@ -13,7 +18,21 @@ export const TaskComponent: React.FC<{ task: Task }> = ({ task }) => {
   return (
     <div className={`m-2 p-3 ${colors[task.status]}`}>
       <div className="flex justify-between">
-        <h1 className="text-1xl font-bold">{task.title}</h1>
+        <input
+          className="text-1xl font-bold bg-transparent"
+          value={title}
+          onChange={e => {
+            // @ts-expect-error: Bun doesnt recognize this
+            const value = e.target.value;
+            setTitle(value);
+            clearTimeout(titleTimeout);
+            titleTimeout = setTimeout(() => {
+              updateTask(task.id, {
+                title: value,
+              });
+            }, 1000);
+          }}
+        ></input>
         <h1
           className="font-bold bg-red-600 flex justify-center items-center px-2 rounded-md hover:bg-red-800 cursor-pointer"
           onClick={() => {
@@ -23,7 +42,21 @@ export const TaskComponent: React.FC<{ task: Task }> = ({ task }) => {
           X
         </h1>
       </div>
-      <p className="text-justify">{task.description}</p>
+      <textarea
+        className="text-justify bg-transparent w-full"
+        value={description}
+        onChange={e => {
+          // @ts-expect-error: Bun doesnt recognize this
+          const value = e.target.value;
+          setDescription(value);
+          clearTimeout(descriptionTimeout);
+          descriptionTimeout = setTimeout(() => {
+            updateTask(task.id, {
+              description: value,
+            });
+          }, 1000);
+        }}
+      />
       <div className="flex mx-5 justify-between">
         <input
           id="date"

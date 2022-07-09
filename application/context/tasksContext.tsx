@@ -1,5 +1,5 @@
 import { Task } from "domain/entities";
-import React, { createContext } from "react";
+import React, { createContext, useEffect } from "react";
 import { TasksRepository } from "../repositories/tasksRepository";
 import { TaskManager } from "../use-cases/task-manager/taskManager";
 
@@ -23,6 +23,7 @@ export const TasksContextProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [tasks, setTask] = React.useState<Task[]>([]);
+
   const contextValue = {
     taskManager: getTaskManager(),
     tasks,

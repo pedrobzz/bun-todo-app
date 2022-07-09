@@ -57,10 +57,14 @@ export const useTasks = () => {
       },
     ) => {
       const response = await taskManager.createTask(task);
-      setTasks(prevTasks => [...prevTasks, response.data]);
+      setTasks(prevTasks => [
+        ...prevTasks.filter(t => t.id !== response.data.id),
+        response.data,
+      ]);
+      console.log("created");
       await refetchTasks();
     },
-    [taskManager, refetchTasks],
+    [taskManager, tasks, setTasks],
   );
 
   return { tasks, updateTask, refetchTasks, deleteTask, createTask };
