@@ -1,5 +1,5 @@
 import { Task } from "src/domain/entities";
 
-export interface getAllTasks {
+export interface GetAllTasks {
   getAllTasks: () => Promise<Task[]>;
 }

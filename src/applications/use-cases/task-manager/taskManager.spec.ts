@@ -1,7 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { Task } from "src/domain/entities";
 import { TasksRepositorEntity } from "src/domain/repositories";
-import { CreateTask, GetTaskById } from "src/domain/use-cases/tasks";
+import {
+  CreateTask,
+  GetAllTasks,
+  GetTaskById,
+} from "src/domain/use-cases/tasks";
 
 class MockTasksRepository implements TasksRepositorEntity {
   tasks: Task[] = [];
@@ -39,7 +43,7 @@ class MockTasksRepository implements TasksRepositorEntity {
   };
 }
 
-class TaskManager implements CreateTask, GetTaskById {
+class TaskManager implements CreateTask, GetTaskById, GetAllTasks {
   constructor(private tasksRepository: TasksRepositorEntity) {}
 
   createTask(
@@ -58,6 +62,10 @@ class TaskManager implements CreateTask, GetTaskById {
 
   getTaskById = async (taskId: string): Promise<Task | undefined> => {
     return this.tasksRepository.getTaskById(taskId);
+  };
+
+  getAllTasks = async (): Promise<Task[]> => {
+    return this.tasksRepository.getAllTasks();
   };
 }
 
@@ -113,7 +121,7 @@ describe("Tasks Manager: Create Task", () => {
   });
 });
 
-describe("Tasks Manager: Get Task By Id", () => {
+describe("Tasks Manager: Get Tasks", () => {
   it("Shouldn't be able to get a Task by Id if it doesn't exist", async () => {
     const sut = makeSUT();
     const task = await sut.getTaskById("123");
@@ -132,5 +140,33 @@ describe("Tasks Manager: Get Task By Id", () => {
     });
     const taskById = await sut.getTaskById(task.id);
     expect(taskById).toBe(task);
+  });
+
+  it("Should be able to retrieve 0 tasks if it doesn't has one", async () => {
+    const sut = makeSUT();
+    const tasks = await sut.getAllTasks();
+    expect(tasks.length).toBe(0);
+  });
+
+  it("Should be able to retrieve all tasks", async () => {
+    const sut = makeSUT();
+    const now = new Date();
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const task1 = await sut.createTask({
+      title: "Task 1",
+      description: "Task 1 description",
+      dueDate: nextWeek.toISOString(),
+      status: "Doing",
+    });
+    const task2 = await sut.createTask({
+      title: "Task 2",
+      description: "Task 2 description",
+      dueDate: nextWeek.toISOString(),
+      status: "Doing",
+    });
+    const tasks = await sut.getAllTasks();
+    expect(tasks.length).toBe(2);
+    expect(tasks.find(t => t.id === task1.id)).toBe(task1);
+    expect(tasks.find(t => t.id === task2.id)).toBe(task2);
   });
 });
