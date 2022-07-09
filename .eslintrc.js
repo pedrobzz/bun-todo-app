@@ -15,7 +15,7 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js', 'jest.config.js', 'babel.config.*'],
+  ignorePatterns: ['.eslintrc.js', 'jest.config.js', 'next.config.*', 'tailwind.config.*', 'postcss.config.*'],
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
