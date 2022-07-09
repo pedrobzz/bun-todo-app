@@ -1,6 +1,9 @@
+import { useTasks } from "application/hooks/useTasks";
 import { Task } from "domain/entities";
+import { useState } from "react";
 
 export const TaskComponent: React.FC<{ task: Task }> = ({ task }) => {
+  const { deleteTask, updateTask } = useTasks();
   const colors = {
     TODO: "bg-purple-400",
     Doing: "bg-yellow-400",
@@ -11,7 +14,12 @@ export const TaskComponent: React.FC<{ task: Task }> = ({ task }) => {
     <div className={`m-2 p-3 ${colors[task.status]}`}>
       <div className="flex justify-between">
         <h1 className="text-1xl font-bold">{task.title}</h1>
-        <h1 className="font-bold bg-red-600 flex justify-center items-center px-2 rounded-md hover:bg-red-800 cursor-pointer">
+        <h1
+          className="font-bold bg-red-600 flex justify-center items-center px-2 rounded-md hover:bg-red-800 cursor-pointer"
+          onClick={() => {
+            deleteTask(task.id);
+          }}
+        >
           X
         </h1>
       </div>
@@ -24,19 +32,22 @@ export const TaskComponent: React.FC<{ task: Task }> = ({ task }) => {
           className="border-2 border-transparent border-b-white rounded-lg bg-transparent"
           onChange={e => {
             // @ts-expect-error: Bun doesnt recognize this
-            const value = e.target.value;
-            console.log(value);
+            const value: string = e.target.value;
+            const dt = new Date(value).toISOString();
+            console.log(dt);
+            updateTask(task.id, { dueDate: dt });
           }}
         />
         <div>
           <select
-            id="cars"
-            name="cars"
+            id="status-select"
+            name="status select"
             value={task.status}
             onChange={e => {
               // @ts-expect-error: Bun doesnt recognize this
-              const value = e.target.value;
+              const value: Task["status"] = e.target.value;
               console.log(value);
+              updateTask(task.id, { status: value });
             }}
           >
             {Object.keys(colors).map(c => {
