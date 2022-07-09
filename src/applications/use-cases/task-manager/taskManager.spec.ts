@@ -3,6 +3,7 @@ import { Task } from "src/domain/entities";
 import { TasksRepositorEntity } from "src/domain/repositories";
 import {
   CreateTask,
+  DeleteTask,
   GetAllTasks,
   GetTaskById,
   UpdateTask,
@@ -44,51 +45,89 @@ class MockTasksRepository implements TasksRepositorEntity {
   };
 }
 
-class TaskManager implements CreateTask, GetTaskById, GetAllTasks, UpdateTask {
+class TaskManager
+  implements CreateTask, GetTaskById, GetAllTasks, UpdateTask, DeleteTask
+{
   constructor(private tasksRepository: TasksRepositorEntity) {}
 
-  createTask(
-    task: Omit<Task, "id" | "createdAt" | "updatedAt">,
-  ): Promise<Task> {
+  createTask: CreateTask["createTask"] = async task => {
     const obrigatory = ["title", "description", "dueDate"];
     const missing = obrigatory.filter(key => !Object.keys(task).includes(key));
     if (missing.length > 0) {
-      throw new Error(`Missing fields: ${missing.join(", ")}`);
+      return {
+        status: 400,
+        success: false,
+        error: `Missing fields: ${missing.join(", ")}`,
+      };
     }
-    return this.tasksRepository.createTask({
-      ...task,
-      status: task.status || "TODO",
-    });
-  }
-
-  getTaskById = async (taskId: string): Promise<Task | undefined> => {
-    return this.tasksRepository.getTaskById(taskId);
+    const newTask = await this.tasksRepository.createTask(task);
+    return {
+      status: 200,
+      success: true,
+      data: newTask,
+    };
   };
 
-  getAllTasks = async (): Promise<Task[]> => {
-    return this.tasksRepository.getAllTasks();
+  getTaskById: GetTaskById["getTaskById"] = async taskId => {
+    const task = await this.tasksRepository.getTaskById(taskId);
+    return {
+      status: task ? 200 : 404,
+      success: task ? true : false,
+      ...(task ? { data: task } : { error: "Task not found" }),
+    };
   };
 
-  updateTask = async (
-    id: string,
-    task: Partial<Omit<Task, "id" | "createdAt" | "updatedAt">>,
-  ): Promise<Task> => {
+  getAllTasks: GetAllTasks["getAllTasks"] = async () => {
+    const tasks = await this.tasksRepository.getAllTasks();
+    return {
+      status: 200,
+      success: true,
+      data: tasks,
+    };
+  };
+
+  updateTask: UpdateTask["updateTask"] = async (id, task) => {
     const forbiddenUpdate = ["id", "createdAt", "updatedAt"];
     const forbidden = forbiddenUpdate.filter(key =>
       Object.keys(task).includes(key),
     );
     if (forbidden.length > 0) {
-      throw new Error(`Forbidden fields: ${forbidden.join(", ")}`);
+      return {
+        status: 400,
+        success: false,
+        error: `Forbidden fields: ${forbidden.join(", ")}`,
+      };
     }
     const currentTask = await this.getTaskById(id);
     if (!currentTask) {
-      throw new Error(`Task with id ${id} not found`);
+      return {
+        status: 404,
+        success: false,
+        error: `Task with id ${id} not found`,
+      };
     }
-    return this.tasksRepository.updateTask(id, task);
+    const updated = await this.tasksRepository.updateTask(id, task);
+    return {
+      status: 200,
+      success: true,
+      data: updated,
+    };
   };
 
-  deleteTask = async (taskId: string): Promise<void> => {
-    return this.tasksRepository.deleteTask(taskId);
+  deleteTask: DeleteTask["deleteTask"] = async taskId => {
+    await this.tasksRepository.deleteTask(taskId);
+    const byIdResponse = await this.getTaskById(taskId);
+    if (byIdResponse.success) {
+      return {
+        status: 500,
+        success: false,
+        error: `Wasn't able to delete task with id ${taskId}. Please, try again`,
+      };
+    }
+    return {
+      status: 200,
+      success: true,
+    };
   };
 }
 
