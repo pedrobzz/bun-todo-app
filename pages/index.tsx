@@ -1,9 +1,27 @@
 import Head from "next/head";
 import React from "react";
-import { getTasksManager } from "applications/hooks/getTaskManager";
+import { getTasksManager } from "application/hooks/getTaskManager";
+import { TaskComponent } from "application/components/Task/Task";
+import { Task } from "domain/entities";
 
 export default function Home({}) {
   const taskManager = getTasksManager();
+  const mockTask: Task = {
+    title: "Task Teste",
+    description:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis nulla mi, suscipit eget diam et, luctus ultrices nunc. Nulla finibus blandit nisl ac congue.",
+    id: "1",
+    updatedAt: "2022-07-09T00:00:00.000Z",
+    createdAt: "2022-07-01900:00:00.000Z",
+    dueDate: "2020-01-01T00:00:00.000Z",
+    status: "TODO",
+  };
+  const allStatus: Array<Task["status"]> = [
+    "TODO",
+    "Doing",
+    "Done",
+    "Canceled",
+  ];
   return (
     <div>
       <Head>
@@ -15,7 +33,21 @@ export default function Home({}) {
         <nav className="flex justify-center p-5">
           <h1 className="text-4xl font-bold">Bun Todo App</h1>
         </nav>
-        <h1 className="text-3xl font-bold">Hello, Bun!</h1>
+        <main>
+          <div className="flex justify-between gap-12">
+            {allStatus.map(status => (
+              <div className="flex flex-col" key={`${status}-col`}>
+                <h1 className="text-2xl font-bold text-center">{status}</h1>
+                {new Array(5).fill(1).map((_, index) => (
+                  <TaskComponent
+                    task={{ ...mockTask, status: status }}
+                    key={`task-${status}-${index}`}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </main>
       </div>
     </div>
   );
