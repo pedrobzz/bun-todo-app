@@ -1,4 +1,4 @@
-import { Task } from "src/domain/entities";
+import { Task } from "domain/entities";
 import { BaseUseCaseResponse } from "../baseUseCaseResponse";
 
 export interface GetAllTasks {

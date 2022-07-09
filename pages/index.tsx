@@ -12,10 +12,17 @@ export default function Home({}) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      <button
+        onClick={() => {
+          console.log("Hello, Bun!");
+        }}
+      >
+        click me
+      </button>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Welcome to <a href="https://nextjs.org">Next.js!</a> v
-          {nextPackage.version}. Using Bun
+          {nextPackage.version}
         </h1>
 
         <p className={styles.description}>
