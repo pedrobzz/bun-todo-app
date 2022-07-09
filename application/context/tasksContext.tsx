@@ -1,3 +1,4 @@
+import { Task } from "domain/entities";
 import React, { createContext } from "react";
 import { TasksRepository } from "../repositories/tasksRepository";
 import { TaskManager } from "../use-cases/task-manager/taskManager";
@@ -12,6 +13,8 @@ const getTaskManager = (): TaskManager => {
 
 interface TasksContextInterface {
   taskManager: TaskManager;
+  tasks: Task[];
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
 export const TasksContext = createContext<TasksContextInterface>(null);
@@ -19,11 +22,12 @@ export const TasksContext = createContext<TasksContextInterface>(null);
 export const TasksContextProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [contextValue, setContextValue] = React.useState<TasksContextInterface>(
-    {
-      taskManager: getTaskManager(),
-    },
-  );
+  const [tasks, setTask] = React.useState<Task[]>([]);
+  const contextValue = {
+    taskManager: getTaskManager(),
+    tasks,
+    setTasks: setTask,
+  };
   return (
     <TasksContext.Provider value={contextValue}>
       {children}
