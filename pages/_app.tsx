@@ -1,4 +1,4 @@
-import { TasksContextProvider } from "applications/context/tasksContext";
+import { TasksContextProvider } from "application/context/tasksContext";
 // import "../styles/globals.css";
 import "../styles/tailwind.css";
 
