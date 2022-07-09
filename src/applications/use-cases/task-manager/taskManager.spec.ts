@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Task } from "src/domain/entities";
 import { TasksRepositorEntity } from "src/domain/repositories";
-import { CreateTask } from "src/domain/use-cases/tasks";
+import { CreateTask, GetTaskById } from "src/domain/use-cases/tasks";
 
 class MockTasksRepository implements TasksRepositorEntity {
   tasks: Task[] = [];
@@ -39,8 +39,9 @@ class MockTasksRepository implements TasksRepositorEntity {
   };
 }
 
-class TaskManager implements CreateTask {
+class TaskManager implements CreateTask, GetTaskById {
   constructor(private tasksRepository: TasksRepositorEntity) {}
+
   createTask(
     task: Omit<Task, "id" | "createdAt" | "updatedAt">,
   ): Promise<Task> {
@@ -54,6 +55,10 @@ class TaskManager implements CreateTask {
       status: task.status || "TODO",
     });
   }
+
+  getTaskById = async (taskId: string): Promise<Task | undefined> => {
+    return this.tasksRepository.getTaskById(taskId);
+  };
 }
 
 const makeSUT = (): TaskManager => {
@@ -105,5 +110,27 @@ describe("Tasks Manager: Create Task", () => {
     expect(task.description).toBe("Task 1 description");
     expect(task.dueDate).toBe(nextWeek.toISOString());
     expect(task.status).toBe("Doing");
+  });
+});
+
+describe("Tasks Manager: Get Task By Id", () => {
+  it("Shouldn't be able to get a Task by Id if it doesn't exist", async () => {
+    const sut = makeSUT();
+    const task = await sut.getTaskById("123");
+    expect(task).toBe(undefined);
+  });
+
+  it("Should be able to get a Task by ID", async () => {
+    const sut = makeSUT();
+    const now = new Date();
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const task = await sut.createTask({
+      title: "Task 1",
+      description: "Task 1 description",
+      dueDate: nextWeek.toISOString(),
+      status: "Doing",
+    });
+    const taskById = await sut.getTaskById(task.id);
+    expect(taskById).toBe(task);
   });
 });
